@@ -1,0 +1,6 @@
+deps
+_build
+tmp
+.lexical
+.elixir_ls
+doc
