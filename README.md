@@ -60,7 +60,10 @@ Chosen uses PostgreSQL advisory locks to guarantee global uniqueness:
   name: :my_chosen,                     # Optional: lock identifier (default: Chosen)
   sup_name: :my_sup,                    # Optional: supervisor name for which_children/1
   polling_interval: 1000,               # Optional: retry interval in ms (default: 500)
-  lock_manager_name: :my_lock_manager   # Optional: LockManager instance (default: Chosen.LockManager)
+  lock_manager_name: :my_lock_manager,  # Optional: LockManager instance (default: Chosen.LockManager)
+  on_lock_acquired: fn name ->          # Optional: callback after lock acquired
+    Logger.info("Singleton #{name} became active!")
+  end
 ]}
 ```
 
@@ -117,6 +120,27 @@ GenServer.call(pid, :get_state)
 ```
 
 Or use Registry, Horde, or any other process registry.
+
+## Lock Acquisition Callback
+
+You can be notified when your singleton successfully acquires the lock and starts:
+
+```elixir
+{Chosen, [
+  child: MyConsumer,
+  name: "my_consumer",
+  on_lock_acquired: fn name ->
+    Logger.info("[MyApp] Started #{name} (acquired lock)")
+  end
+]}
+```
+
+This is useful for:
+- Logging which node is running the singleton
+- Metrics/monitoring integration
+- Triggering post-startup actions
+
+The callback is invoked **after** the child process has successfully started, ensuring the singleton is fully operational.
 
 ## Supervisor Semantics
 

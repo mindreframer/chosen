@@ -10,7 +10,7 @@ defmodule Chosen do
 
   alias Chosen.ErrorReporter
 
-  defstruct [:child, :name, :polling_interval, :lock_manager_name, :has_lock]
+  defstruct [:child, :name, :polling_interval, :lock_manager_name, :has_lock, :on_lock_acquired]
 
   @type start_opt ::
           {:child, Supervisor.child_spec()}
@@ -18,6 +18,7 @@ defmodule Chosen do
           | {:sup_name, term()}
           | {:polling_interval, integer()}
           | {:lock_manager_name, GenServer.server()}
+          | {:on_lock_acquired, (term() -> :ok)}
 
   @default_polling_interval 500
 
@@ -32,6 +33,7 @@ defmodule Chosen do
   - `:sup_name` - (optional) Supervisor name for `which_children/1` and `count_children/1`
   - `:polling_interval` - (optional) Lock retry interval in ms, default: #{@default_polling_interval}
   - `:lock_manager_name` - (optional) LockManager to use, default: `Chosen.LockManager`
+  - `:on_lock_acquired` - (optional) Callback function invoked after successfully acquiring lock and starting child
 
   ## Example
 
@@ -85,6 +87,7 @@ defmodule Chosen do
     polling_interval = Keyword.get(init_opts, :polling_interval, @default_polling_interval)
     lock_manager_name = Keyword.get(init_opts, :lock_manager_name, Chosen.LockManager)
     name = Keyword.get(init_opts, :name, __MODULE__)
+    on_lock_acquired = Keyword.get(init_opts, :on_lock_acquired)
     child = Chosen.Supervisor.handle_child_spec(child) |> Map.put(:pid, :undefined)
 
     state = %__MODULE__{
@@ -92,7 +95,8 @@ defmodule Chosen do
       name: name,
       polling_interval: polling_interval,
       lock_manager_name: lock_manager_name,
-      has_lock: false
+      has_lock: false,
+      on_lock_acquired: on_lock_acquired
     }
 
     {:ok, state, {:continue, :init}}
@@ -136,6 +140,15 @@ defmodule Chosen do
   def handle_info(:got_lock, state) do
     case start_child(state.child, state) do
       {:ok, child} ->
+        # Invoke callback after successfully starting child
+        if state.on_lock_acquired do
+          try do
+            state.on_lock_acquired.(state.name)
+          rescue
+            e -> ErrorReporter.report_error(:callback_error, e, child, state.name)
+          end
+        end
+
         {:noreply, %{state | child: child, has_lock: true}}
 
       :abort ->

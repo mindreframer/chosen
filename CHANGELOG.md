@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## [0.1.1] - 2025-01-23
+
+### Added
+- `:on_lock_acquired` callback option - invoked after successfully acquiring lock and starting child
+- Enables custom logging or monitoring when singleton becomes active
+
 ## [0.1.0] - 2025-12-28
 
 ### Added
