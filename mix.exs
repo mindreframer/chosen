@@ -22,7 +22,7 @@ defmodule Chosen.MixProject do
 
   defp deps do
     [
-      {:postgrex, "~> 0.18.0 or ~> 0.19.0 or ~> 0.20.0 or ~> 0.21.0"},
+      {:postgrex, "~> 0.18.0 or ~> 0.19.0 or ~> 0.20.0 or ~> 0.21.0 or ~> 0.22.0"},
 
       ## DEV / TEST
       {:ecto_sql, "~> 3.0", optional: true},
