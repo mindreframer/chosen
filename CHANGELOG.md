@@ -1,6 +1,10 @@
 # CHANGELOG
 
-## [0.1.1] - 2025-01-23
+## [0.1.2] - 2026-08-29
+- support `postgrex` ~> 0.22
+- bump deps
+
+## [0.1.1] - 2026-01-23
 
 ### Added
 - `:on_lock_acquired` callback option - invoked after successfully acquiring lock and starting child
